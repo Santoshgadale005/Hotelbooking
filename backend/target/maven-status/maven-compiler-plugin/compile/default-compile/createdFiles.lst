@@ -1,0 +1,16 @@
+com\hotelbooking\model\User.class
+com\hotelbooking\service\SimpleUserAuthenticator.class
+com\hotelbooking\repository\UserRepository.class
+com\hotelbooking\repository\ReservationRepository.class
+com\hotelbooking\WebConfig.class
+com\hotelbooking\controller\ReservationController.class
+com\hotelbooking\HotelBookingApplication.class
+com\hotelbooking\controller\UserController.class
+com\hotelbooking\service\ReservationService.class
+com\hotelbooking\service\UserService.class
+com\hotelbooking\controller\HotelController.class
+com\hotelbooking\repository\HotelRepository.class
+com\hotelbooking\model\Hotel.class
+com\hotelbooking\service\HotelService.class
+com\hotelbooking\model\Reservation.class
+com\hotelbooking\model\UserAuthenticator.class

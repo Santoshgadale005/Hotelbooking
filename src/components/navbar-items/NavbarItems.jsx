@@ -8,19 +8,26 @@ import { AuthContext } from 'contexts/AuthContext';
  * A component that renders the navigation items for the navbar for both mobile/desktop view.
  *
  * @param {Object} props - The component's props.
- * @param {boolean} props.isAuthenticated - A flag indicating whether the user is authenticated.
  * @param {Function} props.onHamburgerMenuToggle
  */
-const NavbarItems = ({ isAuthenticated, onHamburgerMenuToggle }) => {
+const NavbarItems = ({ onHamburgerMenuToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const context = useContext(AuthContext);
+
+  // Check if user is authenticated based on local storage
+  const isAuthenticated = !!localStorage.getItem('userId');
 
   /**
    * Handles the logout action by calling the logout API and updating the authentication state.
    */
   const handleLogout = async () => {
     await networkAdapter.post('api/users/logout');
+
+    // Remove userId from local storage
+    localStorage.removeItem('userId');
+
+    // Trigger authentication check and navigate to login
     context.triggerAuthCheck();
     navigate('/login');
   };

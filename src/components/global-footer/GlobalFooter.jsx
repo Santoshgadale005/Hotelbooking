@@ -40,12 +40,6 @@ const GlobalFooter = () => {
             </form>
           </div>
         </div>
-        <div className="text-center mt-10">
-          <p>Designed and styled by izoogood</p>
-          <p>
-            &copy; {new Date().getFullYear()} izoogood. All rights reserved.
-          </p>
-        </div>
       </div>
     </footer>
   );

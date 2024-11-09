@@ -19,11 +19,11 @@ import format from 'date-fns/format';
 const HotelBookingDetailsCard = ({ hotelCode }) => {
   // State for date picker visibility
   const [isDatePickerVisible, setisDatePickerVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('');
 
   const navigate = useNavigate();
-
-  // State for error message
-  const [errorMessage, setErrorMessage] = useState('');
 
   // State for date range
   const [dateRange, setDateRange] = useState([
@@ -67,6 +67,15 @@ const HotelBookingDetailsCard = ({ hotelCode }) => {
     {
       value: '1 King Bed Standard Non Smoking',
       label: '1 King Bed Standard Non Smoking',
+    },
+
+    {
+      value: '1 King Bed Standard  Smoking',
+      label: '1 King Bed Standard  Smoking',
+    },
+    {
+      value: '1 Royal Suite',
+      label: '1 Royal Suite',
     },
   ];
 
@@ -122,35 +131,52 @@ const HotelBookingDetailsCard = ({ hotelCode }) => {
     setTaxes(`${formatPrice(totalGst)} INR`);
   };
 
-  const onBookingConfirm = () => {
+  const onBookingConfirm = async () => {
+    // Get userId from local storage
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      // Show toast message if user is not logged in
+      setToastMessage('Please login first to book a hotel.');
+      setToastType('error');
+      return;
+    }
+
+    // Validate date range
     if (!dateRange[0].startDate || !dateRange[0].endDate) {
       setErrorMessage('Please select check-in and check-out dates.');
       return;
     }
-    const checkIn = format(dateRange[0].startDate, 'dd-MM-yyyy');
-    const checkOut = format(dateRange[0].endDate, 'dd-MM-yyyy');
-    const queryParams = {
-      hotelCode,
-      checkIn,
-      checkOut,
-      guests: selectedGuests.value,
-      rooms: selectedRooms.value,
-      hotelName: bookingDetails.name.replaceAll(' ', '-'), // url friendly hotel name
+
+    // Format the dates
+    const checkInDate = format(dateRange[0].startDate, 'yyyy-MM-dd');
+    const checkOutDate = format(dateRange[0].endDate, 'yyyy-MM-dd');
+
+    // Create booking data
+    const bookingData = {
+      userId: parseInt(userId),
+      hotelCode: hotelCode,
+      room: selectedRoom.value,
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      status: 'Confirmed',
     };
 
-    const url = `/checkout?${queryString.stringify(queryParams)}`;
-    navigate(url, {
-      state: {
-        total,
-        checkInTime: bookingDetails.checkInTime,
-        checkOutTime: bookingDetails.checkOutTime,
-      },
-    });
-  };
-
-  // Handler for dismissing error message
-  const dismissError = () => {
-    setErrorMessage('');
+    try {
+      // Send POST request to create a reservation
+      const response = await networkAdapter.post(
+        'http://localhost:8080/api/reservations',
+        bookingData
+      );
+      navigate(`/booking-confirmation?payment=sucess&hotel=${hotelCode}`);
+      if (response && response.data) {
+        setToastMessage('Booking confirmed successfully!'); // Success message
+        setToastType('success');
+      }
+    } catch (error) {
+      // Handle error response
+      setToastMessage('Failed to confirm booking. Please try again.'); // Error message
+      setToastType('error');
+    }
   };
 
   // Effect for initial price calculation
@@ -213,11 +239,6 @@ const HotelBookingDetailsCard = ({ hotelCode }) => {
             options={roomNumberOptions}
             className="mb-2"
           />
-          <Select
-            value={selectedGuests}
-            onChange={handleGuestsNumberChange}
-            options={guestOptions}
-          />
         </div>
 
         {/* Room Type */}
@@ -232,27 +253,22 @@ const HotelBookingDetailsCard = ({ hotelCode }) => {
 
         {/* Per day rate */}
         <div className="mb-4">
-          <div className="font-semibold text-gray-800">Per day rate</div>
+          <div className="font-semibold text-gray-800">Per Day Rate</div>
           <div className="text-gray-600">
             {formatPrice(bookingDetails.currentNightRate)} INR
           </div>
         </div>
-
-        {/* Taxes */}
-        <div className="mb-4">
-          <div className="font-semibold text-gray-800">Taxes</div>
-          <div className="text-gray-600">{taxes}</div>
-          <div className="text-xs text-gray-500">{DEFAULT_TAX_DETAILS}</div>
-        </div>
-
-        {errorMessage && (
-          <Toast
-            type="error"
-            message={errorMessage}
-            dismissError={dismissError}
-          />
-        )}
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <Toast
+          type={toastType}
+          message={toastMessage}
+          dismissError={() => setToastMessage('')} // Dismiss message
+        />
+      )}
+
       <div className="px-6 py-4 bg-gray-50">
         <button
           onClick={onBookingConfirm}

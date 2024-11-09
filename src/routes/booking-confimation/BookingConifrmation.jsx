@@ -29,14 +29,6 @@ const BookingConfirmation = () => {
   });
 
   // Set booking details from location state passed from the previous page(checkout page)
-  useEffect(() => {
-    if (location.state) {
-      const { bookingDetails } = location.state.confirmationData;
-      setBookingDetails(bookingDetails);
-    } else {
-      navigate('/');
-    }
-  }, [bookingDetails, location.state, navigate]);
 
   return (
     <div className="md:mx-auto max-w-[800px] my-40">
@@ -47,14 +39,6 @@ const BookingConfirmation = () => {
         >
           Back to home
         </Link>
-        <button
-          onClick={() => {
-            handlePrint(null, () => contentToPrint.current);
-          }}
-          className="border p-2 min-w-[120px] transition-all delay-75 hover:bg-gray-500 hover:text-white hover:animate-bounce"
-        >
-          Print
-        </button>
       </div>
       <div
         ref={contentToPrint}
@@ -70,10 +54,6 @@ const BookingConfirmation = () => {
         <h1 className="text-gray-700 text-2xl font-bold">Booking Confirmed</h1>
         <p className="text-gray-600 mt-2">
           Thank you for your booking! Your reservation has been confirmed.
-        </p>
-        <p className="text-gray-600">
-          Please check your email for the booking details and instructions for
-          your stay.
         </p>
         <div className="mt-4 flex justify-center flex-wrap items-center">
           {bookingDetails &&

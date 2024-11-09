@@ -1,29 +1,23 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { networkAdapter } from 'services/NetworkAdapter';
-import React, { useContext } from 'react';
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from 'contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import validations from 'utils/validations';
 import Toast from 'components/ux/toast/Toast';
-import { LOGIN_MESSAGES } from 'utils/constants';
 
 /**
  * Login Component
  * Renders a login form allowing users to sign in to their account.
- * It handles user input for email and password, submits login credentials to the server,
+ * Handles user input for username and password, submits login credentials to the server,
  * and navigates the user to their profile upon successful authentication.
- * Displays an error message for invalid login attempts.
  */
 const Login = () => {
   const navigate = useNavigate();
-  const context = useContext(AuthContext);
+  const { triggerAuthCheck } = useContext(AuthContext);
   const [loginData, setLoginData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
-
-  const [errorMessage, setErrorMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   /**
    * Handles input changes for the login form fields.
@@ -42,17 +36,37 @@ const Login = () => {
    */
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
 
-    if (validations.validate('email', loginData.email)) {
-      const response = await networkAdapter.post('api/users/login', loginData);
-      if (response && response.data.token) {
-        context.triggerAuthCheck();
-        navigate('/user-profile');
-      } else if (response && response.errors.length > 0) {
-        setErrorMessage(response.errors[0]);
+    try {
+      const response = await fetch('http://localhost:8080/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid login credentials');
       }
-    } else {
-      setErrorMessage(LOGIN_MESSAGES.FAILED);
+
+      const data = await response.json();
+      if (data.userId) {
+        // Store user ID in local storage for persistent access
+        localStorage.setItem('userId', data.userId);
+        triggerAuthCheck(data); // Update authentication state
+        navigate(`/user-profile/${data.userId}`); // Redirect with userId in URL
+      } else {
+        setErrorMessage(
+          data.errors ? data.errors[0] : 'Login failed. Please try again.'
+        );
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,10 +95,10 @@ const Login = () => {
             </div>
             <div className="mb-6">
               <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={loginData.email}
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={loginData.username}
                 onChange={handleInputChange}
                 autoComplete="username"
                 className="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
@@ -109,18 +123,17 @@ const Login = () => {
               />
             )}
             <div className="items-center">
-              <div>
-                <button
-                  type="submit"
-                  className="bg-brand hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-                >
-                  Log In
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="bg-brand hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : 'Log In'}
+              </button>
               <div className="flex flex-wrap justify-center my-3 w-full">
                 <Link
                   to="/forgot-password"
-                  className="inline-block align-baseline text-md text-gray-500 hover:text-blue-800 text-right"
+                  className="inline-block align-baseline text-md text-gray-500 hover:text-blue-800"
                 >
                   Forgot your password?
                 </Link>
@@ -136,7 +149,7 @@ const Login = () => {
               <div className="flex flex-wrap justify-center my-3 w-full mt-12">
                 <Link
                   to="/register"
-                  className="inline-block align-baseline font-medium text-md text-brand hover:text-blue-800 text-right"
+                  className="inline-block align-baseline font-medium text-md text-brand hover:text-blue-800"
                 >
                   Create an account
                 </Link>
@@ -146,8 +159,8 @@ const Login = () => {
         </div>
       </div>
       <div className="bg-slate-50 flex flex-col mx-auto w-full max-w-lg px-4">
-        <small className="text-slate-600">test user details</small>
-        <small className="text-slate-600">Email: user1@example.com</small>
+        <small className="text-slate-600">Test user details:</small>
+        <small className="text-slate-600">Username: user1</small>
         <small className="text-slate-600">Password: password1</small>
       </div>
     </>

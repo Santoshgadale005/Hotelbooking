@@ -44,7 +44,7 @@ export function makeServer({ environment = 'development' } = {}) {
       // Add a logged-in user state to the server
       let loggedInUser = null;
 
-      this.passthrough('http://localhost:4000/*');
+      this.passthrough('http://localhost:8080/*');
 
       this.get('/users/auth-user', () => {
         if (loggedInUser) {
@@ -54,7 +54,6 @@ export function makeServer({ environment = 'development' } = {}) {
             {
               errors: [],
               data: {
-                isAuthenticated: true,
                 userDetails: {
                   id: loggedInUser.id,
                   firstName: loggedInUser.firstName,
